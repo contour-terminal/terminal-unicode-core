@@ -1,0 +1,115 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+
+\usepackage{colortbl}
+\usepackage{epigraph}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{hhline}
+
+\usepackage{xcolor}
+\definecolor{light-gray}{gray}{0.95}
+
+\title{Unicode in Terminals \\
+a proposal to standardizing basic Unicode features}
+\author{Christian Parpart}
+\date{2020-07-27 (draft, revision 0)}
+
+\newcommand{\code}[1]{\colorbox{light-gray}{\texttt{#1}}}
+
+\newcommand{\DECRQM}[1]{\code{CSI ? #1 \$ p}}
+\newcommand{\DECSET}[1]{\code{CSI ? #1 h}}
+\newcommand{\DECRST}[1]{\code{CSI ? #1 l}}
+
+\newcommand\VtModeNum{2027}                          % Grapheme cluster mode Id
+\newcommand{\GCON}{\DECSET{\VtModeNum{}}}            % DECSM for enabling grapheme cluster processing
+\newcommand{\GCOFF}{\DECRST{\VtModeNum{}}}           % DECRM for disabling grapheme cluster processing
+\newcommand{\GCTEST}{\DECRQM{\VtModeNum{}}} % DECRQM for requesting current grapheme cluster processing mode
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{History and current state}
+
+Historically, only 7-bit characters were supported by terminals and different languages by selecting
+their respective code pages.
+Later on
+
+\begin{itemize}
+    \item Back in the days: 7bit ASCII text, 8bit ASCII text, many code pages for switching character set
+    \item Then Unicode came, the one to rule them all. But Terminals are incompatible.
+    \item Unicode UTF-8 came, could be incooperated into terminals,
+\end{itemize}
+
+TBD.
+
+...
+
+Is Grapheme cluster handling an issue? Only when the application makes assumptions about
+the cursor placement after having sent out a sequence of Unicode codepoints that form a grapheme
+cluster.
+
+\section{Backwards Compatibility}
+
+TBD.
+
+basic points are:
+Everything is disabled by default, so legacy apps don't break more than they
+used to break already.
+
+\section{Future Compatibility and Stability}
+
+TBD.
+
+\section{Mode Detection}
+
+\GCTEST can be used to test the which mode is currently active or if this feature is not available
+at all - such as with non-supporting terminals or with terminals that have this support disabled.
+
+\section{Mode Switching}
+
+\begin{itemize}
+    \item \GCON{} for enabling grapheme clustering
+    \item \GCOFF{} for disabling grapheme clustering
+\end{itemize}
+
+\section{Feature Detection}
+
+\DECRQM{\VtModeNum} can not just be used for testing the current mode but this VT sequence will also
+respond with a specific code indicating that this mode (and thus this feature) is not supported.
+
+The \code{DA1} could be extended to also indicate support, but \code{DECRQM} is sufficient.
+
+There is a \textbf{feature detection}  spec in the works, that could be used in the future for
+detecting this feature, too.
+
+\section{Column width of a grapheme cluster}
+
+\begin{itemize}
+    \item TODO
+    \item TBD
+\end{itemize}
+
+\section{Performance Considerations}
+
+Maybe mention "Blink's Text Stack" (or Contour's text stack) and how they deal with caching.
+
+\section{References}
+
+\begin{itemize}
+    \item DECRQM, https://vt100.net/docs/vt510-rm/DECRQM.html
+    \item DECSM, https://vt100.net/docs/vt510-rm/SM.html
+    \item DECRM, https://vt100.net/docs/vt510-rm/RM.html
+    \item Grapheme segmentation algorithm, URL to Unicode TR and section,
+        https://unicode.org/reports/tr29/\#Grapheme\_Cluster\_Boundaries
+    \item Maybe also URL to "Blink's Text Stack",
+        https://chromium.googlesource.com/chromium/src/+/master/third\_party/blink/renderer/platform/fonts/README.md
+        or the one from Contour:
+        https://github.com/christianparpart/contour/blob/master/docs/text-stack.md
+\end{itemize}
+
+\end{document}

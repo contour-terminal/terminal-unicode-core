@@ -1,0 +1,123 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - preview
+      - release
+
+jobs:
+  compile_pdf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: "install dependencies"
+        run: |
+          set -ex
+          sudo apt -q update
+          sudo apt install -y texlive-latex-base texlive-latex-extra latexmk
+      - name: "Compile PDF"
+        run: |
+          set -ex
+          cd spec
+          latexmk -pdflatex terminal-unicode-core
+      - name: "Uploading PDF"
+        uses: actions/upload-artifact@v2
+        with:
+          name: spec
+          path: spec/terminal-unicode-core.pdf
+          if-no-files-found: error
+
+  compile_md:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: "install dependencies"
+        run: |
+          set -ex
+          sudo apt -q update
+          sudo apt install -y pandoc
+      - name: "Compile markdown"
+        run: |
+          set -ex
+          cd spec
+          pandoc -s terminal-unicode-core.tex -o terminal-unicode-core.md
+      - name: "Uploading markdown"
+        uses: actions/upload-artifact@v2
+        with:
+          name: spec
+          path: spec/terminal-unicode-core.md
+          if-no-files-found: error
+
+  do_release:
+    name: Create Github release
+    runs-on: ubuntu-latest
+    needs: [compile_pdf, compile_md]
+    steps:
+      - uses: actions/checkout@v1
+      # -------------------------------------------------------------
+      - name: fetch release artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: spec
+      # -------------------------------------------------------------
+      - name: Set Output Variables
+        id: set_env_var
+        env:
+          REPOSITORY: ${{ github.event.repository.name }}
+        run: |
+          VERSION=$(grep '^### ' Changelog.md | head -n1 | awk '{print $2}')
+          SUFFIX=$(grep '^### ' Changelog.md | head -n1 | awk '{print $3}' | tr -d '()')
+          if [ $REPOSITORY = "master" ]; then IS_PRE='false'; else IS_PRE='true'; fi
+          if [ $REPOSITORY = "master" ]; then SUFFIX=''     ; else SUFFIX='prerelease'; fi
+          if [ $REPOSITORY != "master" ]; then
+            TAG_SUFFIX="_prerelease_${GITHUB_RUN_NUMBER}"
+          else
+            TAG_SUFFIX=""
+          fi
+          RELEASEBODY=$(awk -v RS='^### ' '/^'$VERSION'/ {print $0}' Changelog.md | tail -n+3)
+          RELEASEBODY="${RELEASEBODY//'%'/'%25'}"
+          RELEASEBODY="${RELEASEBODY//$'\n'/'%0A'}"
+          RELEASEBODY="${RELEASEBODY//$'\r'/'%0D'}"
+          echo "::set-output name=version::${VERSION}"
+          echo "::set-output name=tag_suffix::${TAG_SUFFIX}"
+          echo "::set-output name=RUN_ID::${GITHUB_RUN_NUMBER}"
+          echo "::set-output name=IS_PRERELEASE::${IS_PRE}"
+          echo "::set-output name=RELEASENAME_SUFFIX::${SUFFIX}"
+          echo "::set-output name=RELEASEBODY::${RELEASEBODY}"
+      # -------------------------------------------------------------
+      - name: Create Github release page
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.set_env_var.outputs.version }}${{ steps.set_env_var.outputs.tag_suffix}}
+          release_name: Terminal Good Image Protocol ${{ steps.set_env_var.outputs.version }}-${{ steps.set_env_var.outputs.RUN_ID }} ${{ steps.set_env_var.outputs.RELEASENAME_SUFFIX}}
+          body: |
+            ${{ steps.set_env_var.outputs.RELEASEBODY }}
+          draft: true
+          prerelease: ${{ steps.set_env_var.outputs.IS_PRERELEASE }}
+      # -------------------------------------------------------------
+      - name: Upload PDF
+        id: upload-release-pdf
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: terminal-unicode-core.pdf
+          asset_name: terminal-unicode-core-${{ steps.set_env_var.outputs.version }}-${{ steps.set_env_var.outputs.RUN_ID }}.pdf
+          asset_content_type: application/pdf
+      # -------------------------------------------------------------
+      - name: Upload markdown
+        id: upload-release-md
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: terminal-unicode-core.md
+          asset_name: terminal-unicode-core-${{ steps.set_env_var.outputs.version }}-${{ steps.set_env_var.outputs.RUN_ID }}.md
+          asset_content_type: text/markdown
+

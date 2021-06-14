@@ -1,0 +1,55 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - wip
+      - master
+      - preview
+      - release
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  compile_pdf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: "install dependencies"
+        run: |
+          set -ex
+          sudo apt -q update
+          sudo apt install -y texlive-latex-base texlive-latex-extra latexmk
+      - name: "Compile PDF"
+        run: |
+          set -ex
+          cd spec
+          latexmk -pdflatex terminal-unicode-core
+      - name: "Uploading PDF"
+        uses: actions/upload-artifact@v2
+        with:
+          name: spec
+          path: spec/terminal-unicode-core.pdf
+          if-no-files-found: error
+
+  compile_md:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: "install dependencies"
+        run: |
+          set -ex
+          sudo apt -q update
+          sudo apt install -y pandoc
+      - name: "Compile markdown"
+        run: |
+          set -ex
+          cd spec
+          pandoc -s terminal-unicode-core.tex -o terminal-unicode-core.md
+      - name: "Uploading markdown"
+        uses: actions/upload-artifact@v2
+        with:
+          name: spec
+          path: spec/terminal-unicode-core.md
+          if-no-files-found: error
