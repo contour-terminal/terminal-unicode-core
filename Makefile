@@ -11,7 +11,7 @@ clean:
 
 ${TARGET_DIR}/${BASENAME}.pdf: $(SOURCE_FILES)
 	@mkdir -p ${TARGET_DIR}
-	@cd spec && latexmk -pdflatex ${BASENAME}.tex \
-		-aux-directory=../${TARGET_DIR} -output-directory=../${TARGET_DIR}
+	@pdflatex -aux_directory=${TARGET_DIR} -output-directory=${TARGET_DIR} $^
+	@pdflatex -aux_directory=${TARGET_DIR} -output-directory=${TARGET_DIR} $^
 
 .PHONY: all clean

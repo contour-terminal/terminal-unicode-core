@@ -7,6 +7,22 @@
 \usepackage{fancyhdr}
 \usepackage{graphicx}
 \usepackage{hhline}
+\usepackage{todonotes}
+
+\usepackage{draftwatermark}
+\SetWatermarkText{Draft}
+\SetWatermarkScale{4}
+
+\usepackage{geometry}
+\geometry{legalpaper, margin=1in}
+
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan
+}
 
 \usepackage{xcolor}
 \definecolor{light-gray}{gray}{0.95}
@@ -14,17 +30,19 @@
 \title{Unicode in Terminals \\
 a proposal to standardizing basic Unicode features}
 \author{Christian Parpart}
-\date{2020-07-27 (draft, revision 0)}
+\date{2021-09-04 (draft, revision 1)}
 
 \newcommand{\code}[1]{\colorbox{light-gray}{\texttt{#1}}}
+
+\newcommand{\Unicode}{\textbf{Unicode 13}}
 
 \newcommand{\DECRQM}[1]{\code{CSI ? #1 \$ p}}
 \newcommand{\DECSET}[1]{\code{CSI ? #1 h}}
 \newcommand{\DECRST}[1]{\code{CSI ? #1 l}}
 
-\newcommand\VtModeNum{2027}                          % Grapheme cluster mode Id
-\newcommand{\GCON}{\DECSET{\VtModeNum{}}}            % DECSM for enabling grapheme cluster processing
-\newcommand{\GCOFF}{\DECRST{\VtModeNum{}}}           % DECRM for disabling grapheme cluster processing
+\newcommand\VtModeNum{2027}                	% mode Id that is used by this specification
+\newcommand{\GCON}{\DECSET{\VtModeNum{}}}   % DECSM for enabling grapheme cluster processing
+\newcommand{\GCOFF}{\DECRST{\VtModeNum{}}}  % DECRM for disabling grapheme cluster processing
 \newcommand{\GCTEST}{\DECRQM{\VtModeNum{}}} % DECRQM for requesting current grapheme cluster processing mode
 
 \begin{document}
@@ -35,81 +53,175 @@ a proposal to standardizing basic Unicode features}
 
 \section{History and current state}
 
-Historically, only 7-bit characters were supported by terminals and different languages by selecting
-their respective code pages.
-Later on
+Historically, only 7-bit characters with C0 control codes
+were supported by terminals and different languages
+by selecting their respective code pages.
 
-\begin{itemize}
-    \item Back in the days: 7bit ASCII text, 8bit ASCII text, many code pages for switching character set
-    \item Then Unicode came, the one to rule them all. But Terminals are incompatible.
-    \item Unicode UTF-8 came, could be incooperated into terminals,
-\end{itemize}
+Later on this was extended to 8-bit ASCII and along with C1 control codes.
 
-TBD.
+With the introduction of Unicode there were no need to have codepages anymore,
+but the Unicode spec was not explicitly designed to also cover terminals,
+except that C0 and C1 codepoints were preserved.
 
-...
+With Unicode UTF-8 it was possible to at least pass Unicode characters to the
+terminal, but rendering of a few characters as well as their respective
+cursor placement is not defined in the Unicode standard.
 
-Is Grapheme cluster handling an issue? Only when the application makes assumptions about
-the cursor placement after having sent out a sequence of Unicode codepoints that form a grapheme
-cluster.
+Also, Unicode introduced codepoint sequences that are mapping to
+a single user perceived character - so called grapheme clusters.
+The terminal has never attempted any formalization on how to deal with
+grapheme clusters, variation selectors, their east asian width, nor
+emoji and emoji presentation handling.
+
+This spec tries to address some of the problems terminals are suffering
+with Unicode today.
 
 \section{Backwards Compatibility}
-
-TBD.
 
 basic points are:
 Everything is disabled by default, so legacy apps don't break more than they
 used to break already.
 
+Backwards compatibility is retained by leaving everything as undefined
+as it is without this specification.
+
+The application can test for the availability of this feature
+and has to explicitly enable it in order to get the set of properties
+as defined in this document guaranteed.
+
 \section{Future Compatibility and Stability}
 
-TBD.
+Unicode itself had a major breakage at version between version 8 and 9
+with regards to some codepoints having their east asian width changed.
+
+It is feared that this may happen at any time in the future again, although,
+there were no other width change since then.
+
+This specification requires a few Unicode algorithms to be mandatory implemented.
+These may or may not change in the future.
+
+\todo{Pass on version using sub-parameters with the unicode version
+or just allocate a new mode number in case of major changes?}
 
 \section{Mode Detection}
 
-\GCTEST can be used to test the which mode is currently active or if this feature is not available
-at all - such as with non-supporting terminals or with terminals that have this support disabled.
+\GCTEST can be used to test if mode is currently active
+or if this feature is not active (or event available at all) -
+such as with non-supporting terminals
+or with terminals that have this support disabled.
 
 \section{Mode Switching}
 
 \begin{itemize}
-    \item \GCON{} for enabling grapheme clustering
-    \item \GCOFF{} for disabling grapheme clustering
+    \item \GCON{} for ensuring conformance to all rules as defined by this specification
+    \item \GCOFF{} for undefined behavior
 \end{itemize}
 
 \section{Feature Detection}
 
-\DECRQM{\VtModeNum} can not just be used for testing the current mode but this VT sequence will also
-respond with a specific code indicating that this mode (and thus this feature) is not supported.
+\GCTEST can be used for testing the current state of this mode as well
+as, if this mode is not supported at all, this will be indicated in the reply as
+well.
 
+\todo{Do we want to also expose the feature availability via \code{DA1}?}
 The \code{DA1} could be extended to also indicate support, but \code{DECRQM} is sufficient.
 
-There is a \textbf{feature detection}  spec in the works, that could be used in the future for
-detecting this feature, too.
+\section{Semantics}
 
-\section{Column width of a grapheme cluster}
+The following set of semantics \textbf{MUST} be adhered to if this mode is enabled.
+If the mode \code{\VtModeNum} is not set the behavior is as undefined as
+if this specification was not implemented at all in order to retain
+behavior of current terminals and their legacy applications.
 
-\begin{itemize}
-    \item TODO
-    \item TBD
-\end{itemize}
+\subsection{Grapheme Cluster}
+
+With this mode enabled, the terminal \textbf{MUST} support grapheme clusters
+in conformance to algorithm as described in \ref{ref:UTS-29}.
+
+This implies that every consecutively written character on the terminal
+stream that is non-breakable as per \ref{ref:UTS-29} will
+always end up in the same terminal's grid cell.
+
+Therefore, extending a grapheme cluster with consecutively added codepoints
+will not move the cursor except for variation selector 16 (VS16) that may
+have caused the width of the grapheme cluster to change to wide (2 grid cells).
+
+When the cursor moves to a grid cell that contains a complete or incomplete
+grapheme cluster, this grid cell's contents will be erased and overwritten
+rather then textually concatinated.
+
+Therefore cursor movement semantics of the terminal remain unchanged.
+
+\subsection{Emoji}
+
+Emoji symbols are always rendered in square aspect ratio
+(as proposed by \ref{ref:UTS-51}),
+implying a East Asian Width of Wide, 2 grid cells.
+
+ZWJ emoji are required to be displayed as a single image with a width of 2
+grid cells.
+
+The alternate display of ZWJ emoji in a decomposed sequence of sub-images
+must not be used as a fallback as it will break cursor movemeent guarantees.
+
+If a ZWJ emoji cannot be rendered the display behavior is undefined -
+for example, a unicode replacement character \code{U+FFFD} could be
+displayed instead.
+
+In emoji emoji presentation, the cursor will always move by 2 grid cells.
+
+The contents of the skipped grid cell is undefined. \todo{really? Maybe we want to be explicit here.}
+Good practise would though be to have this cell be cleared and its SGR set
+to the currently active SGR attributes.
+
+\subsection{Variation Selector 16}
+
+VS16 promotes the grapheme cluster to emoji emoji presentation,
+implying that this will force the grapheme cluster's width to be 2,
+which may possibly cause reflowing of that symbol to the next line
+if on right margin with AutoWrap mode is set.
+
+\subsection{Variation Selector 15}
+
+VS15 forces the grapheme cluster to emoji text presentation.
+This will \textbf{NOT} change the underlying width
+but only change the display to prefer textual non-colored presentation.
+
+This matches the behavior of todays web browsers and should thus
+feel most intuitive to users.
+
+The cursor will thus still move by 2 grid cells (thus having 1 skipped)
+if the symbol has the default presentation of emoji.
+
+\subsection{Margins and AutoWrap with Emoji}
+
+Emoji written at the right margin with AutoWrap mode disabled
+may or may not be rendered in half or not be displayed at all.
+This behavior is undefined to ease implementation and adoption 
+of this specification.
 
 \section{Performance Considerations}
 
-Maybe mention "Blink's Text Stack" (or Contour's text stack) and how they deal with caching.
+The grapheme cluster segmentation algorithm is expensive.
+But performance optimizations can be applied with the assumption
+that most of the inbound text will most likely be US-ASCII.
+
+\todo{Maybe mention "Blink's Text Stack" (or Contour's text stack) and how they deal with caching.}
 
 \section{References}
 
 \begin{itemize}
-    \item DECRQM, https://vt100.net/docs/vt510-rm/DECRQM.html
-    \item DECSM, https://vt100.net/docs/vt510-rm/SM.html
-    \item DECRM, https://vt100.net/docs/vt510-rm/RM.html
-    \item Grapheme segmentation algorithm, URL to Unicode TR and section,
-        https://unicode.org/reports/tr29/\#Grapheme\_Cluster\_Boundaries
+	\item \label{ref:DECRQM}DECRQM, https://vt100.net/docs/vt510-rm/DECRQM.html
+	\item \label{ref:DECSM}DECSM, https://vt100.net/docs/vt510-rm/SM.html
+	\item \label{ref:DECRM}DECRM, https://vt100.net/docs/vt510-rm/RM.html
     \item Maybe also URL to "Blink's Text Stack",
-        https://chromium.googlesource.com/chromium/src/+/master/third\_party/blink/renderer/platform/fonts/README.md
-        or the one from Contour:
-        https://github.com/christianparpart/contour/blob/master/docs/text-stack.md
+		\url{https://chromium.googlesource.com/chromium/src/+/master/third\_party/blink/renderer/platform/fonts/README.md}
+        or the one from Contour for the additional terminal context:
+		\url{https://github.com/christianparpart/contour/blob/master/docs/text-stack.md}
+    \item \label{ref:UTS-29}UTS 29, Grapheme segmentation algorithm
+		\url{https://unicode.org/reports/tr29/\#Grapheme\_Cluster\_Boundary\_Rules}
+    \item \label{ref:UTS-51}UTS 51, Unicode Emoji
+		\url{https://unicode.org/reports/tr51/\#Display}, paragraph 2
 \end{itemize}
 
 \end{document}
