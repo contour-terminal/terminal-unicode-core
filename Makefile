@@ -12,6 +12,8 @@ clean:
 ${TARGET_DIR}/${BASENAME}.pdf: $(SOURCE_FILES)
 	@mkdir -p ${TARGET_DIR}
 	@pdflatex -aux_directory=${TARGET_DIR} -output-directory=${TARGET_DIR} $^
+	@bibtex ${TARGET_DIR}/...foo.aux
+	@pdflatex -aux_directory=${TARGET_DIR} -output-directory=${TARGET_DIR} $^
 	@pdflatex -aux_directory=${TARGET_DIR} -output-directory=${TARGET_DIR} $^
 
 .PHONY: all clean

@@ -9,22 +9,15 @@
 \usepackage{hhline}
 \usepackage{todonotes}
 
+\usepackage[backend=biber, style=alphabetic, sorting=ynt]{biblatex}
+\addbibresource{refs.bib}
+
 \usepackage{draftwatermark}
 \SetWatermarkText{Draft}
 \SetWatermarkScale{4}
 
 \usepackage{geometry}
 \geometry{legalpaper, margin=1in}
-
-\usepackage[hidelinks]{hyperref}
-\hypersetup{
-    colorlinks=true,
-	hypertexnames=true
-	citecolor=red,
-    linkcolor=blue,
-    filecolor=magenta,
-    urlcolor=cyan
-}
 
 \usepackage{xcolor}
 \definecolor{light-gray}{gray}{0.95}
@@ -102,7 +95,7 @@ as of this spec and leave this for a later point.
 
 \section{Feature and Mode State Detection}
 
-\GCTEST (\ref{ref:DECRQM}) can be used for testing the availability of this
+\GCTEST can be used for testing the availability of this
 feature as well as the current mode the terminal is in with regards
 to this specification, the \GCTEST reply will indigate each state
 acurately enough not not need any new VT sequence introduced.
@@ -110,8 +103,8 @@ acurately enough not not need any new VT sequence introduced.
 \section{Mode Switching}
 
 \begin{itemize}
-	\item \GCON{} (\ref{ref:DECSM}) for ensuring conformance to all rules as defined by this specification
-    \item \GCOFF{} (\ref{ref:DECRM}) for undefined behavior
+	\item \GCON{} for ensuring conformance to all rules as defined by this specification
+    \item \GCOFF{} for undefined behavior
 \end{itemize}
 
 \section{Semantics}
@@ -126,11 +119,11 @@ behavior of current terminals and their legacy applications.
 
 \paragraph*{}
 With this mode enabled, the terminal \textbf{MUST} support grapheme clusters
-in conformance to algorithm as described in UTS 29 \ref{ref:UTS-29}.
+in conformance to algorithm as described in UTS 29 \cite{UTS-29}.
 
 \paragraph*{}
 This implies that every consecutively written character on the terminal
-stream that is non-breakable as per UTS 29 \ref{ref:UTS-29} will
+stream that is non-breakable as per UTS 29 \cite{UTS-29} will
 always end up in the same terminal's grid cell.
 
 \paragraph*{}
@@ -150,7 +143,7 @@ Therefore cursor movement semantics of the terminal remain unchanged.
 
 \paragraph*{}
 Emoji symbols are always rendered in square aspect ratio
-(as proposed by UTS 51 \ref{ref:UTS-51}),
+(as proposed by UTS 51 \cite{UTS-51}),
 implying a East Asian Width of Wide, 2 grid cells.
 
 \paragraph*{}
@@ -202,16 +195,8 @@ may or may not be rendered in half or not be displayed at all.
 This behavior is undefined to ease implementation and adoption 
 of this specification.
 
-\section{References}
+% \medskip
 
-\begin{itemize}
-	\item \label{ref:DECRQM}DECRQM, \url{https://vt100.net/docs/vt510-rm/DECRQM.html}
-	\item \label{ref:DECSM}DECSM, \url{https://vt100.net/docs/vt510-rm/SM.html}
-	\item \label{ref:DECRM}DECRM, \url{https://vt100.net/docs/vt510-rm/RM.html}
-    \item \label{ref:UTS-29}UTS 29, Grapheme segmentation algorithm
-		\url{https://unicode.org/reports/tr29/\#Grapheme\_Cluster\_Boundary\_Rules}
-    \item \label{ref:UTS-51}UTS 51, Unicode Emoji
-		\url{https://unicode.org/reports/tr51/\#Display}, paragraph 2
-\end{itemize}
+\printbibliography[title={References}]
 
 \end{document}
