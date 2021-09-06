@@ -93,7 +93,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ steps.set_env_var.outputs.version }}${{ steps.set_env_var.outputs.tag_suffix}}
-          release_name: Terminal Good Image Protocol ${{ steps.set_env_var.outputs.version }}-${{ steps.set_env_var.outputs.RUN_ID }} ${{ steps.set_env_var.outputs.RELEASENAME_SUFFIX}}
+          release_name: Terminal Unicode Core ${{ steps.set_env_var.outputs.version }}-${{ steps.set_env_var.outputs.RUN_ID }} ${{ steps.set_env_var.outputs.RELEASENAME_SUFFIX}}
           body: |
             ${{ steps.set_env_var.outputs.RELEASEBODY }}
           draft: true
