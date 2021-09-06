@@ -19,6 +19,8 @@
 \usepackage[hidelinks]{hyperref}
 \hypersetup{
     colorlinks=true,
+	hypertexnames=true
+	citecolor=red,
     linkcolor=blue,
     filecolor=magenta,
     urlcolor=cyan
@@ -94,85 +96,83 @@ as defined in this document guaranteed.
 Unicode itself had a major breakage at version between version 8 and 9
 with regards to some codepoints having their east asian width changed.
 
-It is feared that this may happen at any time in the future again, although,
-there were no other width change since then.
+While this may happen any time again, we do not expect that to happen
+that soon nor that frequent to address future incompatibilities
+as of this spec and leave this for a later point.
 
-This specification requires a few Unicode algorithms to be mandatory implemented.
-These may or may not change in the future.
+\section{Feature and Mode State Detection}
 
-\todo{Pass on version using sub-parameters with the unicode version
-or just allocate a new mode number in case of major changes?}
-
-\section{Mode Detection}
-
-\GCTEST can be used to test if mode is currently active
-or if this feature is not active (or event available at all) -
-such as with non-supporting terminals
-or with terminals that have this support disabled.
+\GCTEST (\ref{ref:DECRQM}) can be used for testing the availability of this
+feature as well as the current mode the terminal is in with regards
+to this specification, the \GCTEST reply will indigate each state
+acurately enough not not need any new VT sequence introduced.
 
 \section{Mode Switching}
 
 \begin{itemize}
-    \item \GCON{} for ensuring conformance to all rules as defined by this specification
-    \item \GCOFF{} for undefined behavior
+	\item \GCON{} (\ref{ref:DECSM}) for ensuring conformance to all rules as defined by this specification
+    \item \GCOFF{} (\ref{ref:DECRM}) for undefined behavior
 \end{itemize}
-
-\section{Feature Detection}
-
-\GCTEST can be used for testing the current state of this mode as well
-as, if this mode is not supported at all, this will be indicated in the reply as
-well.
-
-\todo{Do we want to also expose the feature availability via \code{DA1}?}
-The \code{DA1} could be extended to also indicate support, but \code{DECRQM} is sufficient.
 
 \section{Semantics}
 
-The following set of semantics \textbf{MUST} be adhered to if this mode is enabled.
-If the mode \code{\VtModeNum} is not set the behavior is as undefined as
-if this specification was not implemented at all in order to retain
+The following set of semantics \textbf{MUST} be adhered to if this
+VT mode \code{\VtModeNum} is enabled.
+If the VT mode \code{\VtModeNum} is not set, then the behavior is as undefined
+as if this specification was not implemented at all in order to retain
 behavior of current terminals and their legacy applications.
 
 \subsection{Grapheme Cluster}
 
+\paragraph*{}
 With this mode enabled, the terminal \textbf{MUST} support grapheme clusters
-in conformance to algorithm as described in \ref{ref:UTS-29}.
+in conformance to algorithm as described in UTS 29 \ref{ref:UTS-29}.
 
+\paragraph*{}
 This implies that every consecutively written character on the terminal
-stream that is non-breakable as per \ref{ref:UTS-29} will
+stream that is non-breakable as per UTS 29 \ref{ref:UTS-29} will
 always end up in the same terminal's grid cell.
 
+\paragraph*{}
 Therefore, extending a grapheme cluster with consecutively added codepoints
 will not move the cursor except for variation selector 16 (VS16) that may
 have caused the width of the grapheme cluster to change to wide (2 grid cells).
 
+\paragraph*{}
 When the cursor moves to a grid cell that contains a complete or incomplete
 grapheme cluster, this grid cell's contents will be erased and overwritten
 rather then textually concatinated.
 
+\paragraph*{}
 Therefore cursor movement semantics of the terminal remain unchanged.
 
 \subsection{Emoji}
 
+\paragraph*{}
 Emoji symbols are always rendered in square aspect ratio
-(as proposed by \ref{ref:UTS-51}),
+(as proposed by UTS 51 \ref{ref:UTS-51}),
 implying a East Asian Width of Wide, 2 grid cells.
 
+\paragraph*{}
 ZWJ emoji are required to be displayed as a single image with a width of 2
 grid cells.
 
+\paragraph*{}
 The alternate display of ZWJ emoji in a decomposed sequence of sub-images
 must not be used as a fallback as it will break cursor movemeent guarantees.
 
+\paragraph*{}
 If a ZWJ emoji cannot be rendered the display behavior is undefined -
 for example, a unicode replacement character \code{U+FFFD} could be
 displayed instead.
 
+\paragraph*{}
 In emoji emoji presentation, the cursor will always move by 2 grid cells.
 
-The contents of the skipped grid cell is undefined. \todo{really? Maybe we want to be explicit here.}
-Good practise would though be to have this cell be cleared and its SGR set
-to the currently active SGR attributes.
+\paragraph*{}
+SGR attributes applied to a grid cell containing an emoji symbol are
+not strictly defined and it is left to the terminal emulator to have
+sensible meaningful semantics with regards to emoji symbols.
 
 \subsection{Variation Selector 16}
 
@@ -183,15 +183,17 @@ if on right margin with AutoWrap mode is set.
 
 \subsection{Variation Selector 15}
 
+\paragraph*{}
 VS15 forces the grapheme cluster to emoji text presentation.
 This will \textbf{NOT} change the underlying width
 but only change the display to prefer textual non-colored presentation.
 
+\paragraph*{}
 This matches the behavior of todays web browsers and should thus
 feel most intuitive to users.
 
-The cursor will thus still move by 2 grid cells (thus having 1 skipped)
-if the symbol has the default presentation of emoji.
+\paragraph*{}
+The cursor will move by columns if the symbol has the default presentation of emoji.
 
 \subsection{Margins and AutoWrap with Emoji}
 
@@ -200,24 +202,12 @@ may or may not be rendered in half or not be displayed at all.
 This behavior is undefined to ease implementation and adoption 
 of this specification.
 
-\section{Performance Considerations}
-
-The grapheme cluster segmentation algorithm is expensive.
-But performance optimizations can be applied with the assumption
-that most of the inbound text will most likely be US-ASCII.
-
-\todo{Maybe mention "Blink's Text Stack" (or Contour's text stack) and how they deal with caching.}
-
 \section{References}
 
 \begin{itemize}
-	\item \label{ref:DECRQM}DECRQM, https://vt100.net/docs/vt510-rm/DECRQM.html
-	\item \label{ref:DECSM}DECSM, https://vt100.net/docs/vt510-rm/SM.html
-	\item \label{ref:DECRM}DECRM, https://vt100.net/docs/vt510-rm/RM.html
-    \item Maybe also URL to "Blink's Text Stack",
-		\url{https://chromium.googlesource.com/chromium/src/+/master/third\_party/blink/renderer/platform/fonts/README.md}
-        or the one from Contour for the additional terminal context:
-		\url{https://github.com/christianparpart/contour/blob/master/docs/text-stack.md}
+	\item \label{ref:DECRQM}DECRQM, \url{https://vt100.net/docs/vt510-rm/DECRQM.html}
+	\item \label{ref:DECSM}DECSM, \url{https://vt100.net/docs/vt510-rm/SM.html}
+	\item \label{ref:DECRM}DECRM, \url{https://vt100.net/docs/vt510-rm/RM.html}
     \item \label{ref:UTS-29}UTS 29, Grapheme segmentation algorithm
 		\url{https://unicode.org/reports/tr29/\#Grapheme\_Cluster\_Boundary\_Rules}
     \item \label{ref:UTS-51}UTS 51, Unicode Emoji
