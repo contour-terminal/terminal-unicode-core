@@ -9,7 +9,8 @@
 \usepackage{hhline}
 \usepackage{todonotes}
 
-\usepackage[backend=biber, style=alphabetic, sorting=ynt]{biblatex}
+\usepackage{csquotes}
+\usepackage[backend=biber,style=alphabetic]{biblatex}
 \addbibresource{refs.bib}
 
 \usepackage{draftwatermark}
@@ -26,6 +27,8 @@
 a proposal to standardizing basic Unicode features}
 \author{Christian Parpart}
 \date{2021-09-04 (draft, revision 1)}
+
+\nocite{*}
 
 \newcommand{\code}[1]{\colorbox{light-gray}{\texttt{#1}}}
 
