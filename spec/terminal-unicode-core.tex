@@ -10,8 +10,19 @@
 \usepackage{todonotes}
 
 \usepackage{csquotes}
-\usepackage[backend=biber,style=alphabetic]{biblatex}
+\usepackage[backend=biber,style=alphabetic,sorting=anyt]{biblatex}
 \addbibresource{refs.bib}
+
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+	colorlinks=true,
+	hypertexnames=true
+	citecolor=red,
+	linkcolor=blue,
+	filecolor=magenta,
+	citecolor=orange,
+	urlcolor=cyan
+}
 
 \usepackage{draftwatermark}
 \SetWatermarkText{Draft}
@@ -26,22 +37,20 @@
 \title{Unicode in Terminals \\
 a proposal to standardizing basic Unicode features}
 \author{Christian Parpart}
-\date{2021-09-04 (draft, revision 1)}
-
-\nocite{*}
+\date{2021-09-06 (draft, revision 1)}
 
 \newcommand{\code}[1]{\colorbox{light-gray}{\texttt{#1}}}
 
 \newcommand{\Unicode}{\textbf{Unicode 13}}
 
-\newcommand{\DECRQM}[1]{\code{CSI ? #1 \$ p}}
-\newcommand{\DECSET}[1]{\code{CSI ? #1 h}}
-\newcommand{\DECRST}[1]{\code{CSI ? #1 l}}
+\newcommand{\DECRQM}[1]{\code{CSI ? #1 \$ p} }
+\newcommand{\DECSET}[1]{\code{CSI ? #1 h} }
+\newcommand{\DECRST}[1]{\code{CSI ? #1 l} }
 
 \newcommand\VtModeNum{2027}                	% mode Id that is used by this specification
-\newcommand{\GCON}{\DECSET{\VtModeNum{}}}   % DECSM for enabling grapheme cluster processing
-\newcommand{\GCOFF}{\DECRST{\VtModeNum{}}}  % DECRM for disabling grapheme cluster processing
-\newcommand{\GCTEST}{\DECRQM{\VtModeNum{}}} % DECRQM for requesting current grapheme cluster processing mode
+\newcommand{\UCON}{\DECSET{\VtModeNum{}}}   % DECSM for enabling grapheme cluster processing
+\newcommand{\UCOFF}{\DECRST{\VtModeNum{}}}  % DECRM for disabling grapheme cluster processing
+\newcommand{\UCTEST}{\DECRQM{\VtModeNum{}}} % DECRQM for requesting current grapheme cluster processing mode
 
 \begin{document}
 
@@ -76,14 +85,10 @@ with Unicode today.
 
 \section{Backwards Compatibility}
 
-basic points are:
-Everything is disabled by default, so legacy apps don't break more than they
-used to break already.
-
 Backwards compatibility is retained by leaving everything as undefined
-as it is without this specification.
+as it used to be without this specification when this mode is not enabled.
 
-The application can test for the availability of this feature
+The application can test for the availability of this feature mode
 and has to explicitly enable it in order to get the set of properties
 as defined in this document guaranteed.
 
@@ -98,16 +103,16 @@ as of this spec and leave this for a later point.
 
 \section{Feature and Mode State Detection}
 
-\GCTEST can be used for testing the availability of this
+\UCTEST \cite{DECRQM} can be used for testing the availability of this
 feature as well as the current mode the terminal is in with regards
-to this specification, the \GCTEST reply will indigate each state
+to this specification, the \UCTEST reply will indigate each state
 acurately enough not not need any new VT sequence introduced.
 
 \section{Mode Switching}
 
 \begin{itemize}
-	\item \GCON{} for ensuring conformance to all rules as defined by this specification
-    \item \GCOFF{} for undefined behavior
+	\item \UCON{} \cite{SM} for ensuring conformance to all rules as defined by this specification
+	\item \UCOFF{} \cite{RM} for undefined behavior
 \end{itemize}
 
 \section{Semantics}
@@ -122,11 +127,11 @@ behavior of current terminals and their legacy applications.
 
 \paragraph*{}
 With this mode enabled, the terminal \textbf{MUST} support grapheme clusters
-in conformance to algorithm as described in UTS 29 \cite{UTS-29}.
+in conformance to algorithm as described in \cite{UTS-29}.
 
 \paragraph*{}
 This implies that every consecutively written character on the terminal
-stream that is non-breakable as per UTS 29 \cite{UTS-29} will
+stream that is non-breakable as per \cite{UTS-29} will
 always end up in the same terminal's grid cell.
 
 \paragraph*{}
@@ -146,29 +151,27 @@ Therefore cursor movement semantics of the terminal remain unchanged.
 
 \paragraph*{}
 Emoji symbols are always rendered in square aspect ratio
-(as proposed by UTS 51 \cite{UTS-51}),
+(as proposed by \cite{UTS-51}),
 implying a East Asian Width of Wide, 2 grid cells.
 
 \paragraph*{}
-ZWJ emoji are required to be displayed as a single image with a width of 2
-grid cells.
+ZWJ emoji are required to be displayed as a single image with a width of 2 grid cells.
 
-\paragraph*{}
 The alternate display of ZWJ emoji in a decomposed sequence of sub-images
 must not be used as a fallback as it will break cursor movemeent guarantees.
 
 \paragraph*{}
 If a ZWJ emoji cannot be rendered the display behavior is undefined -
-for example, a unicode replacement character \code{U+FFFD} could be
+for example, a Unicode replacement character \code{U+FFFD} could be
 displayed instead.
 
 \paragraph*{}
-In emoji emoji presentation, the cursor will always move by 2 grid cells.
+In emoji emoji presentation, the cursor will always move by 2 grid cells wide.
 
 \paragraph*{}
 SGR attributes applied to a grid cell containing an emoji symbol are
-not strictly defined and it is left to the terminal emulator to have
-sensible meaningful semantics with regards to emoji symbols.
+not strictly defined and it is left to the terminal emulator author to have
+sensible and meaningful semantics with regards to emoji symbols.
 
 \subsection{Variation Selector 16}
 
@@ -193,13 +196,16 @@ The cursor will move by columns if the symbol has the default presentation of em
 
 \subsection{Margins and AutoWrap with Emoji}
 
-Emoji written at the right margin with AutoWrap mode disabled
+Emoji written at the right margin with \cite{DECAWM} AutoWrap mode disabled
 may or may not be rendered in half or not be displayed at all.
 This behavior is undefined to ease implementation and adoption 
 of this specification.
 
-% \medskip
+\subsection{Terminal Reset}
 
-\printbibliography[title={References}]
+Both, Soft reset \cite{DECSTR} as well as hard reset \cite{RIS}
+will reset the mode back to undefined behavior.
+
+\printbibliography[heading=bibintoc,title={References}]
 
 \end{document}

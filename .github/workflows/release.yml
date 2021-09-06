@@ -15,7 +15,7 @@ jobs:
         run: |
           set -ex
           sudo apt -q update
-          sudo apt install -y texlive-latex-base texlive-latex-extra latexmk texlive-bibtex-extra
+          sudo apt install -y texlive-latex-base texlive-latex-extra latexmk texlive-bibtex-extra biber
       - name: "Compile PDF"
         run: |
           set -ex
