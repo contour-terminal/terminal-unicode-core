@@ -8,6 +8,7 @@ all: ${TARGET_DIR}/${BASENAME}.pdf
 
 clean:
 	@rm -vf ${TARGET_DIR}/*
+	@rm ${BASENAME}.bbl
 
 ${TARGET_DIR}/${BASENAME}.pdf: $(SOURCE_FILES)
 	@mkdir -p ${TARGET_DIR}
