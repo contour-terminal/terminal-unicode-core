@@ -105,8 +105,8 @@ as of this spec and leave this for a later point.
 
 \UCTEST \cite{DECRQM} can be used for testing the availability of this
 feature as well as the current mode the terminal is in with regards
-to this specification, the \UCTEST reply will indigate each state
-acurately enough not not need any new VT sequence introduced.
+to this specification, the \UCTEST reply will indicate each state
+accurately enough not to need any new VT sequence introduced.
 
 \section{Mode Switching}
 
@@ -142,7 +142,7 @@ have caused the width of the grapheme cluster to change to wide (2 grid cells).
 \paragraph*{}
 When the cursor moves to a grid cell that contains a complete or incomplete
 grapheme cluster, this grid cell's contents will be erased and overwritten
-rather then textually concatinated.
+rather then textually concatenated.
 
 \paragraph*{}
 Therefore cursor movement semantics of the terminal remain unchanged.
@@ -158,7 +158,7 @@ implying a East Asian Width \cite{UTS-11} of Wide, 2 grid cells.
 ZWJ emoji are required to be displayed as a single image with a width of 2 grid cells.
 
 The alternate display of ZWJ emoji in a decomposed sequence of sub-images
-must not be used as a fallback as it will break cursor movemeent guarantees.
+must not be used as a fallback as it will break cursor movement guarantees.
 
 \paragraph*{}
 If a ZWJ emoji cannot be rendered the display behavior is undefined -
